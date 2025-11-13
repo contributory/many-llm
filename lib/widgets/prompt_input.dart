@@ -608,13 +608,20 @@ class _PromptInputModelSelectState extends State<PromptInputModelSelect> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const SizedBox(width: 4),
-                Text(
-                  _getDisplayName(widget.value),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurfaceVariant,
+                Flexible(
+                  child: Tooltip(
+                    message: _getDisplayName(widget.value),
+                    child: Text(
+                      _getDisplayName(widget.value),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurfaceVariant,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),

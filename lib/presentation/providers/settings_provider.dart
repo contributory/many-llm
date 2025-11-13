@@ -13,6 +13,7 @@ class SettingsProvider extends ChangeNotifier {
 
   List<AIProvider> _customProviders = [];
   Set<String> _enabledProviderIds = {};
+  Map<String, String> _builtInProviderApiKeys = {};
   TTSSettings _ttsSettings = const TTSSettings(provider: 'system', modelId: '');
   List<MCPServer> _mcpServers = [];
   bool _isLoading = false;
@@ -30,7 +31,7 @@ class SettingsProvider extends ChangeNotifier {
         id: builtIn.id,
         name: builtIn.name,
         baseUrl: builtIn.baseUrl,
-        apiKey: '', // Built-in providers need API keys from user
+        apiKey: _builtInProviderApiKeys[builtIn.id] ?? '',
         isEnabled: _enabledProviderIds.contains(builtIn.id),
         isBuiltIn: true,
         models: builtIn.models,
@@ -47,6 +48,7 @@ class SettingsProvider extends ChangeNotifier {
     try {
       await Future.wait([
         _loadEnabledProviders(),
+        _loadBuiltInProviderApiKeys(),
         _loadProviders(),
         _loadTTSSettings(),
         _loadMCPServers(),
@@ -74,6 +76,24 @@ class SettingsProvider extends ChangeNotifier {
     await prefs.setStringList('enabled_provider_ids', _enabledProviderIds.toList());
   }
 
+  Future<void> _loadBuiltInProviderApiKeys() async {
+    final prefs = await SharedPreferences.getInstance();
+    _builtInProviderApiKeys = {};
+    
+    for (final provider in AppConfig.builtInProviders) {
+      final apiKey = prefs.getString('builtin_provider_apikey_${provider.id}');
+      if (apiKey != null && apiKey.isNotEmpty) {
+        _builtInProviderApiKeys[provider.id] = apiKey;
+      }
+    }
+  }
+
+  Future<void> _saveBuiltInProviderApiKey(String providerId, String apiKey) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('builtin_provider_apikey_$providerId', apiKey);
+    _builtInProviderApiKeys[providerId] = apiKey;
+  }
+
   Future<void> _loadProviders() async {
     final savedProviders = await _providerService.getProviders();
     _customProviders = savedProviders.map((p) {
@@ -98,6 +118,20 @@ class SettingsProvider extends ChangeNotifier {
     await _saveEnabledProviders();
     await _loadProviders(); // Reload to update isEnabled state
     notifyListeners();
+  }
+
+  Future<void> updateBuiltInProviderApiKey(String providerId, String apiKey) async {
+    await _saveBuiltInProviderApiKey(providerId, apiKey);
+    notifyListeners();
+  }
+
+  AIProvider? getProviderForModel(String modelId) {
+    for (final provider in enabledProviders) {
+      if (provider.models.contains(modelId)) {
+        return provider;
+      }
+    }
+    return null;
   }
 
   Future<void> addProvider(AIProvider provider) async {

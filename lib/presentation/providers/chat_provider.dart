@@ -267,10 +267,24 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Get provider information for the selected model
+      String? apiKey;
+      String? baseUrl;
+      
+      if (_settingsProvider != null) {
+        final provider = _settingsProvider!.getProviderForModel(modelId);
+        if (provider != null) {
+          apiKey = provider.apiKey;
+          baseUrl = provider.baseUrl;
+        }
+      }
+      
       // Stream response via repository
       final responseStream = _chatRepository.streamChat(
         history: conversation.messages,
         modelId: modelId,
+        apiKey: apiKey,
+        baseUrl: baseUrl,
       );
 
       // Create AI message and start streaming into it

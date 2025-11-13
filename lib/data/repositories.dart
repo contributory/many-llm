@@ -82,12 +82,16 @@ abstract class ChatRepository {
   /// - `history`: Previous messages for context
   /// - `modelId`: AI model identifier (e.g., 'openai/gpt-4o-mini')
   /// - `systemPrompt`: Optional system instructions
+  /// - `apiKey`: API key for authentication
+  /// - `baseUrl`: Base URL for the API endpoint
   ///
   /// **Returns:** Stream of `ChatEvent`s representing the AI response
   Stream<ChatEvent> streamChat({
     required List<Message> history,
     required String modelId,
     String? systemPrompt,
+    String? apiKey,
+    String? baseUrl,
   });
 }
 
@@ -101,11 +105,15 @@ class OpenRouterChatRepository implements ChatRepository {
     required List<Message> history,
     required String modelId,
     String? systemPrompt,
+    String? apiKey,
+    String? baseUrl,
   }) async* {
     try {
       await for (final chunk in _service.sendMessageStream(
         messages: history,
         model: modelId,
+        apiKey: apiKey,
+        baseUrl: baseUrl,
       )) {
         yield ResponseChunk(chunk);
       }
@@ -126,6 +134,8 @@ class FirebaseChatRepository implements ChatRepository {
     required List<Message> history,
     required String modelId,
     String? systemPrompt,
+    String? apiKey,
+    String? baseUrl,
   }) async* {
     // TODO: Implement HTTP/SSE call to Firebase Functions proxy at proxyUrl
     // This is a stub to lay the foundation.
@@ -145,6 +155,8 @@ class SupabaseChatRepository implements ChatRepository {
     required List<Message> history,
     required String modelId,
     String? systemPrompt,
+    String? apiKey,
+    String? baseUrl,
   }) async* {
     // TODO: Implement HTTP/SSE call to Supabase Edge Function at edgeFunctionUrl
     // This is a stub to lay the foundation.
