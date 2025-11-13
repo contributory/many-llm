@@ -331,13 +331,15 @@ class PromptInputSubmit extends StatelessWidget {
 // Model selection components
 class PromptInputModelSelect extends StatefulWidget {
   final String value;
-  final List<String> models;
+  final List<String>? models; // Flat list (legacy)
+  final Map<String, List<String>>? groupedModels; // Grouped by provider
   final ValueChanged<String>? onChanged;
 
   const PromptInputModelSelect({
     super.key,
     required this.value,
-    required this.models,
+    this.models,
+    this.groupedModels,
     this.onChanged,
   });
 
@@ -350,6 +352,13 @@ class _PromptInputModelSelectState extends State<PromptInputModelSelect> {
   final LayerLink _layerLink = LayerLink();
   bool _isOpen = false;
   bool _isHovered = false;
+
+  List<String> get _allModels {
+    if (widget.groupedModels != null) {
+      return widget.groupedModels!.values.expand((list) => list).toList();
+    }
+    return widget.models ?? [];
+  }
 
   String _getDisplayName(String modelId) {
     return AppConfig.modelDisplayNames[modelId] ?? modelId;
@@ -390,13 +399,20 @@ class _PromptInputModelSelectState extends State<PromptInputModelSelect> {
 
     // Get screen dimensions
     final screenSize = MediaQuery.of(context).size;
-    const maxDropdownHeight =
-        280.0; // Maximum height for dropdown (reduced for smaller model list)
-    const itemHeight =
-        40.0; // Height per item including padding (increased for better touch targets)
+    const maxDropdownHeight = 400.0; // Maximum height for dropdown
+    const itemHeight = 40.0; // Height per item including padding
+    const headerHeight = 32.0; // Height of group header
     const verticalPadding = 8.0; // Total vertical padding
 
-    final idealHeight = (widget.models.length * itemHeight) + verticalPadding;
+    // Calculate ideal height based on grouped or flat models
+    double idealHeight;
+    if (widget.groupedModels != null) {
+      final totalItems = _allModels.length;
+      final totalHeaders = widget.groupedModels!.length;
+      idealHeight = (totalItems * itemHeight) + (totalHeaders * headerHeight) + verticalPadding;
+    } else {
+      idealHeight = (_allModels.length * itemHeight) + verticalPadding;
+    }
     final dropdownHeight = idealHeight > maxDropdownHeight
         ? maxDropdownHeight
         : idealHeight;
@@ -451,17 +467,12 @@ class _PromptInputModelSelectState extends State<PromptInputModelSelect> {
                         child: idealHeight > maxDropdownHeight
                             ? Scrollbar(
                                 thumbVisibility: true,
-                                child: ListView.builder(
+                                child: ListView(
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 4,
                                   ),
                                   shrinkWrap: true,
-                                  itemCount: widget.models.length,
-                                  itemBuilder: (context, index) {
-                                    return _buildMenuItem(
-                                      widget.models[index],
-                                    );
-                                  },
+                                  children: _buildModelList(),
                                 ),
                               )
                             : Padding(
@@ -470,9 +481,7 @@ class _PromptInputModelSelectState extends State<PromptInputModelSelect> {
                                 ),
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
-                                  children: widget.models
-                                      .map(_buildMenuItem)
-                                      .toList(),
+                                  children: _buildModelList(),
                                 ),
                               ),
                       ),
@@ -482,6 +491,37 @@ class _PromptInputModelSelectState extends State<PromptInputModelSelect> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildModelList() {
+    if (widget.groupedModels != null && widget.groupedModels!.isNotEmpty) {
+      // Build grouped list with headers
+      final widgets = <Widget>[];
+      for (final entry in widget.groupedModels!.entries) {
+        widgets.add(_buildGroupHeader(entry.key));
+        for (final model in entry.value) {
+          widgets.add(_buildMenuItem(model));
+        }
+      }
+      return widgets;
+    } else {
+      // Build flat list
+      return _allModels.map(_buildMenuItem).toList();
+    }
+  }
+
+  Widget _buildGroupHeader(String providerName) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Text(
+        providerName,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).colorScheme.primary,
+          letterSpacing: 0.5,
         ),
       ),
     );
@@ -667,7 +707,8 @@ class _PromptInputModelSelectState extends State<PromptInputModelSelect> {
 /// ```
 class PromptInputComplete extends StatefulWidget {
   final void Function(String prompt, String modelId)? onSubmit;
-  final List<String>? models;
+  final List<String>? models; // Legacy flat list
+  final Map<String, List<String>>? groupedModels; // Grouped by provider
   final String? modelId;
   final ChatStatus status;
   final String placeholder;
@@ -681,6 +722,7 @@ class PromptInputComplete extends StatefulWidget {
     super.key,
     this.onSubmit,
     this.models,
+    this.groupedModels,
     this.modelId,
     this.status = ChatStatus.idle,
     this.placeholder = 'What would you like to know?',
@@ -711,8 +753,17 @@ class _PromptInputCompleteState extends State<PromptInputComplete> {
   }
 
   String get _currentModel {
-    return widget.modelId ??
-        (widget.models?.firstOrDefault() ?? '');
+    if (widget.modelId != null && widget.modelId!.isNotEmpty) {
+      return widget.modelId!;
+    }
+    
+    // Try grouped models first
+    if (widget.groupedModels != null && widget.groupedModels!.isNotEmpty) {
+      return widget.groupedModels!.values.first.firstOrNull ?? '';
+    }
+    
+    // Fall back to flat models
+    return widget.models?.firstOrDefault() ?? '';
   }
 
   void _handleSubmit() {
@@ -750,7 +801,8 @@ class _PromptInputCompleteState extends State<PromptInputComplete> {
                     const SizedBox(width: 6),
                     PromptInputModelSelect(
                       value: _currentModel,
-                      models: widget.models ?? AppConfig.availableModels,
+                      models: widget.models,
+                      groupedModels: widget.groupedModels,
                       onChanged: widget.onModelChanged,
                     ),
                   ],
@@ -773,4 +825,5 @@ class _PromptInputCompleteState extends State<PromptInputComplete> {
 
 extension on List<String> {
   String? firstOrDefault() => isEmpty ? null : first;
+  String? get firstOrNull => isEmpty ? null : first;
 }

@@ -29,14 +29,6 @@ class ProviderService {
 
   Future<AIProvider> addProvider(AIProvider provider) async {
     final providers = await getProviders();
-    
-    if (provider.isDefault) {
-      final updatedProviders = providers.map((p) => p.copyWith(isDefault: false)).toList();
-      updatedProviders.add(provider);
-      await saveProviders(updatedProviders);
-      return provider;
-    }
-    
     providers.add(provider);
     await saveProviders(providers);
     return provider;
@@ -48,25 +40,14 @@ class ProviderService {
     
     if (index == -1) return;
     
-    if (provider.isDefault) {
-      final updatedProviders = providers.map((p) => p.copyWith(isDefault: false)).toList();
-      updatedProviders[index] = provider;
-      await saveProviders(updatedProviders);
-    } else {
-      providers[index] = provider;
-      await saveProviders(providers);
-    }
+    providers[index] = provider;
+    await saveProviders(providers);
   }
 
   Future<void> deleteProvider(String id) async {
     final providers = await getProviders();
     providers.removeWhere((p) => p.id == id);
     await saveProviders(providers);
-  }
-
-  Future<AIProvider?> getDefaultProvider() async {
-    final providers = await getProviders();
-    return providers.where((p) => p.isDefault).firstOrNull;
   }
 
   Future<List<String>> fetchModelsFromProvider(String baseUrl, String apiKey) async {

@@ -22,7 +22,7 @@ class _TTSTabState extends State<TTSTab> {
   }
 
   List<DropdownMenuItem<String>> _getProviderModels(SettingsProvider provider, String providerId) {
-    final selectedProvider = provider.providers.where((p) => p.id == providerId).firstOrNull;
+    final selectedProvider = provider.allProviders.where((p) => p.id == providerId).firstOrNull;
     if (selectedProvider == null) return [];
     return selectedProvider.models.map((model) => DropdownMenuItem(
       value: model,
@@ -87,7 +87,7 @@ class _TTSTabState extends State<TTSTab> {
                             value: 'system',
                             child: Text('System TTS'),
                           ),
-                          ...settingsProvider.providers
+                          ...settingsProvider.allProviders
                             .where((p) => p.models.isNotEmpty)
                             .map((provider) => DropdownMenuItem(
                               value: provider.id,
