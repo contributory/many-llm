@@ -106,7 +106,8 @@ class AIProvider {
   final String name;
   final String baseUrl;
   final String apiKey;
-  final bool isDefault;
+  final bool isEnabled;
+  final bool isBuiltIn;
   final List<String> models;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -116,7 +117,8 @@ class AIProvider {
     required this.name,
     required this.baseUrl,
     required this.apiKey,
-    required this.isDefault,
+    this.isEnabled = true,
+    this.isBuiltIn = false,
     required this.models,
     required this.createdAt,
     required this.updatedAt,
@@ -127,7 +129,8 @@ class AIProvider {
     'name': name,
     'baseUrl': baseUrl,
     'apiKey': apiKey,
-    'isDefault': isDefault,
+    'isEnabled': isEnabled,
+    'isBuiltIn': isBuiltIn,
     'models': models,
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt.toIso8601String(),
@@ -138,7 +141,8 @@ class AIProvider {
     name: json['name'] as String,
     baseUrl: json['baseUrl'] as String,
     apiKey: json['apiKey'] as String,
-    isDefault: json['isDefault'] as bool? ?? false,
+    isEnabled: json['isEnabled'] as bool? ?? true,
+    isBuiltIn: json['isBuiltIn'] as bool? ?? false,
     models: (json['models'] as List?)?.cast<String>() ?? [],
     createdAt: DateTime.parse(json['createdAt'] as String),
     updatedAt: DateTime.parse(json['updatedAt'] as String),
@@ -149,7 +153,8 @@ class AIProvider {
     String? name,
     String? baseUrl,
     String? apiKey,
-    bool? isDefault,
+    bool? isEnabled,
+    bool? isBuiltIn,
     List<String>? models,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -158,7 +163,8 @@ class AIProvider {
     name: name ?? this.name,
     baseUrl: baseUrl ?? this.baseUrl,
     apiKey: apiKey ?? this.apiKey,
-    isDefault: isDefault ?? this.isDefault,
+    isEnabled: isEnabled ?? this.isEnabled,
+    isBuiltIn: isBuiltIn ?? this.isBuiltIn,
     models: models ?? this.models,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,

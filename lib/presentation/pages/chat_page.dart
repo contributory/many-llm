@@ -342,7 +342,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                 return PromptInputComplete(
                   status: chatProvider.status,
                   modelId: chatProvider.currentModelId,
-                  models: chatProvider.getAvailableModels(),
+                  groupedModels: chatProvider.getGroupedModels(),
                   onSubmit: (prompt, modelId) {
                     chatProvider.sendMessage(prompt, modelId);
                   },

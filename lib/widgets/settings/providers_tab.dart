@@ -12,7 +12,8 @@ class ProvidersTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<SettingsProvider>(
       builder: (context, settingsProvider, child) {
-        final providers = settingsProvider.providers;
+        final builtInProviders = settingsProvider.builtInProviders;
+        final customProviders = settingsProvider.customProviders;
 
         return Column(
           children: [
@@ -22,7 +23,7 @@ class ProvidersTab extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'Manage OpenAI-compatible API providers',
+                      'Manage AI providers and their models',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
@@ -31,51 +32,78 @@ class ProvidersTab extends StatelessWidget {
                   FilledButton.icon(
                     onPressed: () => _showAddProviderDialog(context),
                     icon: const Icon(LucideIcons.plus, size: 18),
-                    label: const Text('Add Provider'),
+                    label: const Text('Add Custom'),
                   ),
                 ],
               ),
             ),
             const Divider(height: 1),
             Expanded(
-              child: providers.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          LucideIcons.server,
-                          size: 64,
-                          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No providers configured',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Add an OpenAI-compatible provider to get started',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                          ),
-                        ),
-                      ],
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  if (builtInProviders.isNotEmpty) ...[
+                    Text(
+                      'Built-in Providers',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: providers.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final provider = providers[index];
-                      return ProviderCard(
+                    const SizedBox(height: 12),
+                    ...builtInProviders.map((provider) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: ProviderCard(
                         provider: provider,
+                        onToggle: (enabled) => settingsProvider.toggleProvider(provider.id, enabled),
+                        isBuiltIn: true,
+                      ),
+                    )),
+                    const SizedBox(height: 24),
+                  ],
+                  Text(
+                    'Custom Providers',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  if (customProviders.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                          children: [
+                            Icon(
+                              LucideIcons.server,
+                              size: 48,
+                              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No custom providers',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    ...customProviders.map((provider) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: ProviderCard(
+                        provider: provider,
+                        onToggle: (enabled) => settingsProvider.toggleProvider(provider.id, enabled),
                         onEdit: () => _showEditProviderDialog(context, provider),
                         onDelete: () => _deleteProvider(context, provider.id),
-                      );
-                    },
-                  ),
+                        isBuiltIn: false,
+                      ),
+                    )),
+                ],
+              ),
             ),
           ],
         );
@@ -123,14 +151,18 @@ class ProvidersTab extends StatelessWidget {
 
 class ProviderCard extends StatelessWidget {
   final AIProvider provider;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  final ValueChanged<bool>? onToggle;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+  final bool isBuiltIn;
 
   const ProviderCard({
     super.key,
     required this.provider,
-    required this.onEdit,
-    required this.onDelete,
+    this.onToggle,
+    this.onEdit,
+    this.onDelete,
+    this.isBuiltIn = false,
   });
 
   @override
@@ -152,18 +184,18 @@ class ProviderCard extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      if (provider.isDefault) ...[
+                      if (isBuiltIn) ...[
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primaryContainer,
+                            color: Theme.of(context).colorScheme.secondaryContainer,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            'DEFAULT',
+                            'BUILT-IN',
                             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              color: Theme.of(context).colorScheme.onSecondaryContainer,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -172,16 +204,23 @@ class ProviderCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                IconButton(
-                  onPressed: onEdit,
-                  icon: const Icon(LucideIcons.pencil, size: 18),
-                  tooltip: 'Edit',
-                ),
-                IconButton(
-                  onPressed: onDelete,
-                  icon: const Icon(LucideIcons.trash2, size: 18),
-                  tooltip: 'Delete',
-                ),
+                if (onToggle != null)
+                  Switch(
+                    value: provider.isEnabled,
+                    onChanged: onToggle,
+                  ),
+                if (!isBuiltIn && onEdit != null)
+                  IconButton(
+                    onPressed: onEdit,
+                    icon: const Icon(LucideIcons.pencil, size: 18),
+                    tooltip: 'Edit',
+                  ),
+                if (!isBuiltIn && onDelete != null)
+                  IconButton(
+                    onPressed: onDelete,
+                    icon: const Icon(LucideIcons.trash2, size: 18),
+                    tooltip: 'Delete',
+                  ),
               ],
             ),
             const SizedBox(height: 8),
@@ -196,11 +235,12 @@ class ProviderCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _buildInfoChip(
-                  context,
-                  LucideIcons.key,
-                  'API Key: ${_maskApiKey(provider.apiKey)}',
-                ),
+                if (!isBuiltIn && provider.apiKey.isNotEmpty)
+                  _buildInfoChip(
+                    context,
+                    LucideIcons.key,
+                    'API Key: ${_maskApiKey(provider.apiKey)}',
+                  ),
                 _buildInfoChip(
                   context,
                   LucideIcons.cpu,
@@ -254,7 +294,6 @@ class _ProviderDialogState extends State<ProviderDialog> {
   late TextEditingController _nameController;
   late TextEditingController _baseUrlController;
   late TextEditingController _apiKeyController;
-  bool _isDefault = false;
   List<String> _models = [];
   bool _isFetchingModels = false;
   String? _errorMessage;
@@ -266,7 +305,6 @@ class _ProviderDialogState extends State<ProviderDialog> {
     _nameController = TextEditingController(text: widget.provider?.name ?? '');
     _baseUrlController = TextEditingController(text: widget.provider?.baseUrl ?? '');
     _apiKeyController = TextEditingController(text: widget.provider?.apiKey ?? '');
-    _isDefault = widget.provider?.isDefault ?? false;
     _models = widget.provider?.models ?? [];
     if (widget.provider != null) _currentStep = 2; // Skip to settings if editing
   }
@@ -321,7 +359,7 @@ class _ProviderDialogState extends State<ProviderDialog> {
       name: _nameController.text,
       baseUrl: _baseUrlController.text,
       apiKey: _apiKeyController.text,
-      isDefault: _isDefault,
+      isEnabled: widget.provider?.isEnabled ?? true,
       models: _models,
       createdAt: widget.provider?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
@@ -752,23 +790,6 @@ class _ProviderDialogState extends State<ProviderDialog> {
                   ),
                 ),
             ],
-          ),
-        ),
-        const SizedBox(height: 24),
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-              width: 1,
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: CheckboxListTile(
-            value: _isDefault,
-            onChanged: (value) => setState(() => _isDefault = value ?? false),
-            title: const Text('Set as default provider'),
-            subtitle: const Text('Use this provider for all new conversations'),
-            secondary: const Icon(LucideIcons.star),
           ),
         ),
         if (_errorMessage != null) ...[

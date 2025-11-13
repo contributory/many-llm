@@ -105,16 +105,33 @@ class ChatProvider extends ChangeNotifier {
     _settingsProvider = settingsProvider;
   }
 
-  List<String> getAvailableModels() {
-    final models = <String>[...AppConfig.availableModels];
+  /// Returns grouped models by provider name
+  /// Map format: {providerName: [model1, model2, ...]}
+  Map<String, List<String>> getGroupedModels() {
+    final grouped = <String, List<String>>{};
     
     if (_settingsProvider != null) {
-      for (final provider in _settingsProvider!.providers) {
+      for (final provider in _settingsProvider!.enabledProviders) {
+        if (provider.models.isNotEmpty) {
+          grouped[provider.name] = provider.models;
+        }
+      }
+    }
+    
+    return grouped;
+  }
+
+  /// Returns flat list of all available models from enabled providers
+  List<String> getAvailableModels() {
+    final models = <String>[];
+    
+    if (_settingsProvider != null) {
+      for (final provider in _settingsProvider!.enabledProviders) {
         models.addAll(provider.models);
       }
     }
     
-    return models.toSet().toList();
+    return models;
   }
 
   void setStatus(ChatStatus status) {

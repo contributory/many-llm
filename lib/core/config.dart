@@ -77,8 +77,59 @@ class AppConfig {
   // Supabase Edge Function URL that proxies OpenRouter
   static const String supabaseEdgeFunctionUrl = '';
 
-  // Available models on OpenRouter
-  static const List<String> availableModels = [];
+  // Built-in provider configurations
+  static final List<BuiltInProvider> builtInProviders = [
+    BuiltInProvider(
+      id: 'openrouter',
+      name: 'OpenRouter',
+      baseUrl: 'https://openrouter.ai/api/v1',
+      models: [
+        'openai/gpt-4o',
+        'openai/gpt-4o-mini',
+        'anthropic/claude-3.5-sonnet',
+        'anthropic/claude-3-opus',
+        'google/gemini-pro-1.5',
+        'meta-llama/llama-3.1-70b-instruct',
+      ],
+    ),
+    BuiltInProvider(
+      id: 'openai',
+      name: 'OpenAI',
+      baseUrl: 'https://api.openai.com/v1',
+      models: [
+        'gpt-4o',
+        'gpt-4o-mini',
+        'gpt-4-turbo',
+        'gpt-3.5-turbo',
+      ],
+    ),
+    BuiltInProvider(
+      id: 'anthropic',
+      name: 'Anthropic',
+      baseUrl: 'https://api.anthropic.com/v1',
+      models: [
+        'claude-3-5-sonnet-20241022',
+        'claude-3-opus-20240229',
+        'claude-3-sonnet-20240229',
+        'claude-3-haiku-20240307',
+      ],
+    ),
+  ];
 
   static const Map<String, String> modelDisplayNames = {};
+}
+
+/// Built-in provider configuration
+class BuiltInProvider {
+  final String id;
+  final String name;
+  final String baseUrl;
+  final List<String> models;
+
+  const BuiltInProvider({
+    required this.id,
+    required this.name,
+    required this.baseUrl,
+    required this.models,
+  });
 }
