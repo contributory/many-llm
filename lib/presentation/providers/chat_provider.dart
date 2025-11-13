@@ -4,6 +4,7 @@ import '../../data/services/thread_naming_service.dart';
 import '../../core/config.dart';
 import '../../data/repositories.dart';
 import '../../data/services/openrouter_service.dart';
+import 'settings_provider.dart';
 
 /// **ChatProvider** - Core state management for the AI chat application
 ///
@@ -49,6 +50,7 @@ class ChatProvider extends ChangeNotifier {
   String _currentModelId = 'openai/gpt-4o-mini';
   final ThreadNamingService _namingService;
   final ChatRepository _chatRepository;
+  SettingsProvider? _settingsProvider;
 
   // For canceling streaming requests
   bool _shouldCancelStream = false;
@@ -98,6 +100,22 @@ class ChatProvider extends ChangeNotifier {
       : null;
 
   List<Message> get messages => selectedConversation?.messages ?? [];
+
+  void setSettingsProvider(SettingsProvider settingsProvider) {
+    _settingsProvider = settingsProvider;
+  }
+
+  List<String> getAvailableModels() {
+    final models = <String>[...AppConfig.availableModels];
+    
+    if (_settingsProvider != null) {
+      for (final provider in _settingsProvider!.providers) {
+        models.addAll(provider.models);
+      }
+    }
+    
+    return models.toSet().toList();
+  }
 
   void setStatus(ChatStatus status) {
     _status = status;

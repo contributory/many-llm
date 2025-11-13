@@ -7,8 +7,6 @@ import '../../widgets/chat_sidebar.dart';
 import '../../widgets/empty_chat_state.dart';
 import '../providers/chat_provider.dart';
 import '../providers/theme_provider.dart';
-import '../../core/config.dart';
-import 'settings_page.dart';
 
 /// **ChatPage** - Main layout and responsive container for the AI chat application
 ///
@@ -139,45 +137,47 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
               ),
             )
           : null,
-      body: Row(
-        children: [
-          // Desktop sidebar
-          if (!isMobile)
-            AnimatedBuilder(
-              animation: _sidebarAnimation,
-              builder: (context, child) {
-                return ClipRect(
-                  child: SizeTransition(
-                    sizeFactor: _sidebarAnimation,
-                    axis: Axis.horizontal,
-                    axisAlignment: -1,
-                    child: ChatSidebar(onClose: _toggleSidebar),
-                  ),
-                );
-              },
-            ),
-          Expanded(
-            child: Column(
-              children: [
-                _buildTopBar(context, isMobile),
-                Expanded(
-                  child: Consumer<ChatProvider>(
-                    builder: (context, chatProvider, child) {
-                      final hasSelectedChat =
-                          chatProvider.selectedConversation != null;
+      body: SafeArea(
+        child: Row(
+          children: [
+            // Desktop sidebar
+            if (!isMobile)
+              AnimatedBuilder(
+                animation: _sidebarAnimation,
+                builder: (context, child) {
+                  return ClipRect(
+                    child: SizeTransition(
+                      sizeFactor: _sidebarAnimation,
+                      axis: Axis.horizontal,
+                      axisAlignment: -1,
+                      child: ChatSidebar(onClose: _toggleSidebar),
+                    ),
+                  );
+                },
+              ),
+            Expanded(
+              child: Column(
+                children: [
+                  _buildTopBar(context, isMobile),
+                  Expanded(
+                    child: Consumer<ChatProvider>(
+                      builder: (context, chatProvider, child) {
+                        final hasSelectedChat =
+                            chatProvider.selectedConversation != null;
 
-                      if (!hasSelectedChat) {
-                        return const EmptyChatState();
-                      }
+                        if (!hasSelectedChat) {
+                          return const EmptyChatState();
+                        }
 
-                      return _buildChatView(context);
-                    },
+                        return _buildChatView(context);
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -341,7 +341,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                 return PromptInputComplete(
                   status: chatProvider.status,
                   modelId: chatProvider.currentModelId,
-                  models: AppConfig.availableModels,
+                  models: chatProvider.getAvailableModels(),
                   onSubmit: (prompt, modelId) {
                     chatProvider.sendMessage(prompt, modelId);
                   },

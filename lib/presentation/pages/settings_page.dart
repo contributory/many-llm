@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../providers/settings_provider.dart';
 import '../../widgets/settings/providers_tab.dart';
 import '../../widgets/settings/tts_tab.dart';
 import '../../widgets/settings/mcp_tab.dart';
