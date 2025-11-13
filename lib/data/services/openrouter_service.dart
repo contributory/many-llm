@@ -51,13 +51,18 @@ class OpenRouterService {
   Future<String> sendMessage({
     required List<Message> messages,
     required String model,
+    String? apiKey,
+    String? baseUrl,
   }) async {
+    final effectiveApiKey = apiKey ?? AppConfig.openRouterApiKey;
+    final effectiveBaseUrl = baseUrl ?? AppConfig.openRouterBaseUrl;
+    
     try {
       final response = await http
           .post(
-            Uri.parse('${AppConfig.openRouterBaseUrl}/chat/completions'),
+            Uri.parse('$effectiveBaseUrl/chat/completions'),
             headers: {
-              'Authorization': 'Bearer ${AppConfig.openRouterApiKey}',
+              'Authorization': 'Bearer $effectiveApiKey',
               'Content-Type': 'application/json',
               'HTTP-Referer': AppConfig.appUrl,
               'X-Title': AppConfig.appName,
@@ -97,16 +102,21 @@ class OpenRouterService {
   Stream<String> sendMessageStream({
     required List<Message> messages,
     required String model,
+    String? apiKey,
+    String? baseUrl,
   }) async* {
+    final effectiveApiKey = apiKey ?? AppConfig.openRouterApiKey;
+    final effectiveBaseUrl = baseUrl ?? AppConfig.openRouterBaseUrl;
+    
     http.Client? client;
     try {
       final request = http.Request(
         'POST',
-        Uri.parse('${AppConfig.openRouterBaseUrl}/chat/completions'),
+        Uri.parse('$effectiveBaseUrl/chat/completions'),
       );
 
       request.headers.addAll({
-        'Authorization': 'Bearer ${AppConfig.openRouterApiKey}',
+        'Authorization': 'Bearer $effectiveApiKey',
         'Content-Type': 'application/json',
         'Accept': 'text/event-stream',
         'HTTP-Referer': AppConfig.appUrl,

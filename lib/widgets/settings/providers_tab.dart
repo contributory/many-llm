@@ -56,6 +56,7 @@ class ProvidersTab extends StatelessWidget {
                       child: ProviderCard(
                         provider: provider,
                         onToggle: (enabled) => settingsProvider.toggleProvider(provider.id, enabled),
+                        onEdit: () => _showEditBuiltInProviderDialog(context, provider),
                         isBuiltIn: true,
                       ),
                     )),
@@ -122,6 +123,13 @@ class ProvidersTab extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => ProviderDialog(provider: provider),
+    );
+  }
+
+  void _showEditBuiltInProviderDialog(BuildContext context, AIProvider provider) {
+    showDialog(
+      context: context,
+      builder: (context) => BuiltInProviderDialog(provider: provider),
     );
   }
 
@@ -209,11 +217,11 @@ class ProviderCard extends StatelessWidget {
                     value: provider.isEnabled,
                     onChanged: onToggle,
                   ),
-                if (!isBuiltIn && onEdit != null)
+                if (onEdit != null)
                   IconButton(
                     onPressed: onEdit,
                     icon: const Icon(LucideIcons.pencil, size: 18),
-                    tooltip: 'Edit',
+                    tooltip: isBuiltIn ? 'Edit API Key' : 'Edit',
                   ),
                 if (!isBuiltIn && onDelete != null)
                   IconButton(
@@ -235,11 +243,17 @@ class ProviderCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                if (!isBuiltIn && provider.apiKey.isNotEmpty)
+                if (provider.apiKey.isNotEmpty)
                   _buildInfoChip(
                     context,
                     LucideIcons.key,
                     'API Key: ${_maskApiKey(provider.apiKey)}',
+                  )
+                else if (isBuiltIn)
+                  _buildInfoChip(
+                    context,
+                    LucideIcons.alertCircle,
+                    'No API key configured',
                   ),
                 _buildInfoChip(
                   context,
@@ -825,6 +839,204 @@ class _ProviderDialogState extends State<ProviderDialog> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class BuiltInProviderDialog extends StatefulWidget {
+  final AIProvider provider;
+
+  const BuiltInProviderDialog({super.key, required this.provider});
+
+  @override
+  State<BuiltInProviderDialog> createState() => _BuiltInProviderDialogState();
+}
+
+class _BuiltInProviderDialogState extends State<BuiltInProviderDialog> {
+  late TextEditingController _apiKeyController;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _apiKeyController = TextEditingController(text: widget.provider.apiKey);
+  }
+
+  @override
+  void dispose() {
+    _apiKeyController.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    if (_apiKeyController.text.isEmpty) {
+      setState(() => _errorMessage = 'Please enter an API key');
+      return;
+    }
+
+    final settingsProvider = context.read<SettingsProvider>();
+    settingsProvider.updateBuiltInProviderApiKey(widget.provider.id, _apiKeyController.text);
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Container(
+        width: 500,
+        constraints: const BoxConstraints(maxHeight: 400),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    LucideIcons.key,
+                    size: 24,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Edit ${widget.provider.name} API Key',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Configure your API key for ${widget.provider.name}',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(LucideIcons.x, size: 20),
+                    tooltip: 'Close',
+                  ),
+                ],
+              ),
+            ),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_errorMessage != null)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.errorContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              LucideIcons.alertCircle,
+                              size: 20,
+                              color: Theme.of(context).colorScheme.onErrorContainer,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _errorMessage!,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onErrorContainer,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    TextField(
+                      controller: _apiKeyController,
+                      decoration: InputDecoration(
+                        labelText: 'API Key',
+                        hintText: 'Enter your ${widget.provider.name} API key',
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(LucideIcons.key, size: 20),
+                      ),
+                      obscureText: true,
+                      onChanged: (_) => setState(() => _errorMessage = null),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            LucideIcons.info,
+                            size: 20,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Your API key will be stored securely on your device and used to authenticate requests to ${widget.provider.name}.',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    onPressed: _save,
+                    child: const Text('Save'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
