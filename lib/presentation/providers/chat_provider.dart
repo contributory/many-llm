@@ -47,7 +47,7 @@ class ChatProvider extends ChangeNotifier {
   final List<Conversation> _conversations = [];
   String? _selectedConversationId;
   ChatStatus _status = ChatStatus.idle;
-  String _currentModelId = 'openai/gpt-4o-mini';
+  String _currentModelId = '';
   final ThreadNamingService _namingService;
   final ChatRepository _chatRepository;
   SettingsProvider? _settingsProvider;

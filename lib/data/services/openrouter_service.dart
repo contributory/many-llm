@@ -3,24 +3,15 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models.dart';
 import '../../core/config.dart';
-import 'mock_responses_service.dart';
 
 /// **OpenRouterService** - Direct API client for OpenRouter.ai
 ///
-/// Handles both real AI API calls and mock responses for development/demo purposes.
 /// This service is primarily used in development mode (`BackendProvider.direct`).
 ///
 /// ## Key Features:
-/// - **Dual Mode Operation**: Real API calls or mock responses based on key availability
 /// - **Streaming Support**: Real-time response streaming via Server-Sent Events
 /// - **Error Handling**: Comprehensive error handling with user-friendly messages
 /// - **Security Awareness**: Built-in warnings about API key exposure
-///
-/// ## Mock Mode Behavior:
-/// When `AppConfig.openRouterApiKey.isEmpty`:
-/// - Uses `MockResponsesService` for realistic demo responses
-/// - Simulates streaming delays and realistic response patterns
-/// - Perfect for template previews and development without API keys
 ///
 /// ## Production Security:
 /// ⚠️  **CRITICAL**: This service makes direct client-side API calls
@@ -55,26 +46,12 @@ import 'mock_responses_service.dart';
 /// ```
 class OpenRouterService {
   static const Duration _timeout = Duration(seconds: 30);
-  static final _mockService = MockResponsesService();
 
-  bool get _isInMockMode => AppConfig.openRouterApiKey.isEmpty;
-
-  /// Send a chat completion request to OpenRouter (or mock response if no API key)
+  /// Send a chat completion request to OpenRouter
   Future<String> sendMessage({
     required List<Message> messages,
     required String model,
   }) async {
-    // Use mock responses when no API key is configured
-    if (_isInMockMode) {
-      await _mockService.simulateProcessingDelay();
-      final mockStream = _mockService.generateMockResponse();
-      final chunks = <String>[];
-      await for (final chunk in mockStream) {
-        chunks.add(chunk);
-      }
-      return chunks.join(''); // Return complete mock response
-    }
-
     try {
       final response = await http
           .post(
@@ -116,18 +93,11 @@ class OpenRouterService {
     }
   }
 
-  /// Send a streaming chat completion request to OpenRouter (or mock stream if no API key)
+  /// Send a streaming chat completion request to OpenRouter
   Stream<String> sendMessageStream({
     required List<Message> messages,
     required String model,
   }) async* {
-    // Use mock streaming when no API key is configured
-    if (_isInMockMode) {
-      await _mockService.simulateProcessingDelay();
-      yield* _mockService.generateMockResponse();
-      return;
-    }
-
     http.Client? client;
     try {
       final request = http.Request(
