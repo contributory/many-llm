@@ -117,12 +117,13 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 768; // Mobile breakpoint
+    final drawerWidth = screenWidth * 0.85; // 85% of screen width for better mobile UX
 
     return Scaffold(
       key: _scaffoldKey,
       drawer: isMobile
           ? Drawer(
-              width: 380,
+              width: drawerWidth.clamp(280, 380),
               elevation: 0,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.zero,
