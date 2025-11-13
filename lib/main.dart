@@ -54,7 +54,13 @@ class AiChatApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => SettingsProvider()..initialize()),
-        ChangeNotifierProvider(create: (_) => ChatProvider()),
+        ChangeNotifierProxyProvider<SettingsProvider, ChatProvider>(
+          create: (_) => ChatProvider(),
+          update: (context, settingsProvider, chatProvider) {
+            chatProvider!.setSettingsProvider(settingsProvider);
+            return chatProvider;
+          },
+        ),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: Consumer<ThemeProvider>(

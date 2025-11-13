@@ -109,13 +109,19 @@ class MessageView extends StatelessWidget {
   }
 
   Widget _buildAssistantMessage(BuildContext context) {
-    return Consumer<ChatProvider>(
-      builder: (context, chatProvider, child) {
+    return Consumer2<ChatProvider, SettingsProvider>(
+      builder: (context, chatProvider, settingsProvider, child) {
         final isLastMessage =
             chatProvider.messages.isNotEmpty &&
             chatProvider.messages.last.id == message.id;
         final isStreaming =
             chatProvider.status == ChatStatus.streaming && isLastMessage;
+
+        if (!isStreaming && isLastMessage && message.content.isNotEmpty && settingsProvider.ttsSettings.autoPlay) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            settingsProvider.speakText(message.content);
+          });
+        }
 
         return Align(
           alignment: Alignment.centerLeft,
@@ -151,29 +157,25 @@ class MessageView extends StatelessWidget {
               const SizedBox(height: 12),
               // Action buttons (only show when not streaming or empty)
               if (!isStreaming && message.content.isNotEmpty)
-                Consumer<SettingsProvider>(
-                  builder: (context, settingsProvider, child) {
-                    return ResponseActions(
-                      messageContent: message.content,
-                      onThumbsUp: () {
-                        // TODO: Implement feedback tracking
-                        debugPrint('Thumbs up for message: ${message.id}');
-                      },
-                      onThumbsDown: () {
-                        // TODO: Implement feedback tracking
-                        debugPrint('Thumbs down for message: ${message.id}');
-                      },
-                      onCopy: () {
-                        debugPrint('Copied message: ${message.id}');
-                      },
-                      onSpeak: () {
-                        settingsProvider.speakText(message.content);
-                      },
-                      onShare: () {
-                        // TODO: Implement share functionality
-                        debugPrint('Share message: ${message.id}');
-                      },
-                    );
+                ResponseActions(
+                  messageContent: message.content,
+                  onThumbsUp: () {
+                    // TODO: Implement feedback tracking
+                    debugPrint('Thumbs up for message: ${message.id}');
+                  },
+                  onThumbsDown: () {
+                    // TODO: Implement feedback tracking
+                    debugPrint('Thumbs down for message: ${message.id}');
+                  },
+                  onCopy: () {
+                    debugPrint('Copied message: ${message.id}');
+                  },
+                  onSpeak: () {
+                    settingsProvider.speakText(message.content);
+                  },
+                  onShare: () {
+                    // TODO: Implement share functionality
+                    debugPrint('Share message: ${message.id}');
                   },
                 ),
             ],

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'prompt_input.dart';
 import 'package:provider/provider.dart';
 import '../presentation/providers/chat_provider.dart';
-import '../core/config.dart';
 
 /// **EmptyChatState** - Welcome screen for new conversations
 ///
@@ -89,7 +88,7 @@ class EmptyChatState extends StatelessWidget {
               builder: (context, chatProvider, child) {
                 return PromptInputComplete(
                   modelId: chatProvider.currentModelId,
-                  models: AppConfig.availableModels,
+                  models: chatProvider.getAvailableModels(),
                   onModelChanged: (String newModelId) {
                     chatProvider.setModel(newModelId);
                   },

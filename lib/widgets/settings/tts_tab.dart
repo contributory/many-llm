@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../data/models.dart';
 import '../../presentation/providers/settings_provider.dart';
 
 class TTSTab extends StatefulWidget {
