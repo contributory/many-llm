@@ -78,27 +78,7 @@ class AppConfig {
   static const String supabaseEdgeFunctionUrl = '';
 
   // Available models on OpenRouter
-  static const List<String> availableModels = [
-    'openai/gpt-5',
-    'openai/gpt-5-mini',
-    'openai/gpt-5-nano',
-    'openai/chatgpt-4o-latest',
-    'openai/gpt-4o-mini',
-    'anthropic/claude-sonnet-4',
-    'anthropic/claude-3.7-sonnet',
-    'anthropic/claude-3.5-haiku',
-    'google/gemini-2.5-flash-lite',
-  ];
+  static const List<String> availableModels = [];
 
-  static const Map<String, String> modelDisplayNames = {
-    'openai/gpt-5': 'GPT-5',
-    'openai/gpt-5-mini': 'GPT-5 Mini',
-    'openai/gpt-5-nano': 'GPT-5 Nano',
-    'openai/chatgpt-4o-latest': 'ChatGPT 4o',
-    'openai/gpt-4o-mini': 'GPT-4o Mini',
-    'anthropic/claude-sonnet-4': 'Claude Sonnet 4',
-    'anthropic/claude-3.7-sonnet': 'Claude 3.7 Sonnet',
-    'anthropic/claude-3.5-haiku': 'Claude 3.5 Haiku',
-    'google/gemini-2.5-flash-lite': 'Gemini 2.5 Flash Lite',
-  };
+  static const Map<String, String> modelDisplayNames = {};
 }

@@ -712,7 +712,7 @@ class _PromptInputCompleteState extends State<PromptInputComplete> {
 
   String get _currentModel {
     return widget.modelId ??
-        (widget.models?.firstOrDefault() ?? 'openai/gpt-4o-mini');
+        (widget.models?.firstOrDefault() ?? '');
   }
 
   void _handleSubmit() {
